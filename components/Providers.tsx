@@ -44,7 +44,7 @@ export function Providers({ children }: { children: ReactNode }) {
     if (!mounted) return null
 
     return getDefaultConfig({
-      appName: 'zeroke',
+      appName: 'zerokey',
       projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || 'demo',
       chains: [monadTestnet],
       ssr: false,
