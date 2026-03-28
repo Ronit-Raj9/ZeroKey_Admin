@@ -1,36 +1,94 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Zerokey Admin
 
-## Getting Started
+Admin dashboard for **Zerokey / AdShell** on **[Monad testnet](https://docs.monad.xyz/)**. Connect a wallet, inspect on-chain pool metrics (AdPool, USDC), and view telemetry backed by Prisma (impressions, users, activity feed).
 
-First, run the development server:
+## Stack
+
+- **Next.js** (App Router) · **wagmi** + **RainbowKit** · **viem**
+- **Prisma** + PostgreSQL for server-side telemetry
+- Optional **Supabase** client vars for client integrations
+
+## Prerequisites
+
+- Node 20+ or **Bun**
+- A PostgreSQL database URL for Prisma (telemetry)
+- Deployed contract addresses on Monad testnet (or defaults where noted)
+
+## Environment variables
+
+Create `.env.local` in this directory (see `.gitignore` — env files are not committed).
+
+### Database (server — required for telemetry / dashboards with live DB data)
+
+| Variable        | Description |
+|----------------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string (Prisma) |
+| `DIRECT_URL`   | Optional; if set, preferred over `DATABASE_URL` for the Prisma adapter |
+
+### WalletConnect (client)
+
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID` | [WalletConnect Cloud](https://cloud.walletconnect.com/) project ID. Falls back to `"demo"` if unset (fine for local dev; use a real ID for production). |
+
+### Monad RPC (client)
+
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_MONAD_RPC` | Defaults to `https://testnet-rpc.monad.xyz` |
+
+### Contract & app URLs (client, `NEXT_PUBLIC_*`)
+
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_ADPOOL_ADDRESS` | AdPool contract |
+| `NEXT_PUBLIC_ADREGISTRY_ADDRESS` | AdRegistry contract |
+| `NEXT_PUBLIC_REVENUE_DISTRIBUTOR_ADDRESS` | Revenue distributor (if used) |
+| `NEXT_PUBLIC_REPUTATION_ADDRESS` | Reputation oracle (if used) |
+| `NEXT_PUBLIC_USDC_ADDRESS` | USDC token; defaults to Monad testnet USDC if unset |
+| `NEXT_PUBLIC_PROXY_URL` | AdShell proxy base URL; defaults to `http://localhost:4021` |
+
+### Optional — Supabase
+
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
+
+## Development
+
+Install dependencies, then start the dev server:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
+bun install
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Or with npm:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000). The root path redirects to `/dashboard`.
 
-## Learn More
+Other scripts:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+bun run build   # production build
+bun run start   # run production server
+bun run lint    # ESLint
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Prisma
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Migrations and client generation follow your existing Prisma setup (`prisma.config.ts`, `lib/prisma.ts`). Ensure `DATABASE_URL` / `DIRECT_URL` is set before running Prisma CLI commands against this app.
 
-## Deploy on Vercel
+## Security note
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Never commit `.env`, `.env.local`, or private keys. This repo ignores `.env*` by default.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## End-user OpenCode setup (optional)
+
+To point OpenCode’s global config at a deployed **adshell-proxy** (OpenAI key on the server only), publish or use the CLI package **`@ronii/zerokey`** from `zerokey/packages/zerokey`: run `npx @ronii/zerokey init` and set `ZEROKEY_PROXY_URL` or `--proxy` to your proxy URL. This admin app does not host inference; the proxy does.
