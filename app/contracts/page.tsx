@@ -22,7 +22,7 @@ export default function ContractsPage() {
         <div>
           <h1 className="text-3xl font-bold text-foreground mb-2">Contract Controls</h1>
           <p className="text-muted-foreground">
-            Admin interface for managing AdPool contract parameters and state
+            Admin interface for managing zeroke pool contract parameters and state
           </p>
         </div>
 

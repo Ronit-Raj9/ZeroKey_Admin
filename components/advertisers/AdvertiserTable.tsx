@@ -116,7 +116,7 @@ export function AdvertiserTable({ advertisers: initialAdvertisers }: AdvertiserT
                 <tr>
                   <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
                     {advertisers.length === 0
-                      ? 'No advertisers registered yet — deposit USDC to AdPool to get started'
+                      ? 'No advertisers registered yet — deposit USDC to the zeroke pool to get started'
                       : 'No advertisers found matching search'}
                   </td>
                 </tr>

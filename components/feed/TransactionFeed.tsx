@@ -106,7 +106,7 @@ export function TransactionFeed({ transactions: initialTransactions }: Transacti
         {filteredTransactions.length === 0 ? (
           <Card className="p-8 text-center border border-border bg-card">
             <p className="text-muted-foreground">No transactions recorded yet</p>
-            <p className="text-xs text-muted-foreground mt-1">Transactions will appear here as users interact with AdShell</p>
+            <p className="text-xs text-muted-foreground mt-1">Transactions will appear here as users interact with zeroke</p>
           </Card>
         ) : (
           filteredTransactions.map((tx) => {

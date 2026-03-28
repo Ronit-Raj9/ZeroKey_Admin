@@ -45,7 +45,7 @@ export default function FeedPage() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">Live Feed</h1>
-            <p className="text-muted-foreground">Real-time transaction stream from AdPool contract</p>
+            <p className="text-muted-foreground">Real-time transaction stream from the zeroke pool</p>
           </div>
           <Button
             size="sm"

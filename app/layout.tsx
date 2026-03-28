@@ -8,8 +8,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'AdShell Admin Dashboard',
-  description: 'Admin dashboard for managing the AdPool contract on Monad testnet',
+  title: 'zeroke Dashboard',
+  description: 'Admin dashboard for zeroke on Monad testnet',
   generator: 'v0.app',
   icons: {
     icon: [
