@@ -4,12 +4,26 @@ import { useState, useEffect } from 'react'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { UserTable } from '@/components/users/UserTable'
 import { Card } from '@/components/ui/card'
+import { getTelemetryMetrics } from '@/app/actions/telemetry'
 
 export default function UsersPage() {
   const [mounted, setMounted] = useState(false)
+  const [totalUsers, setTotalUsers] = useState(0)
+  const [activeUsers, setActiveUsers] = useState(0)
+  const [totalImpressions, setTotalImpressions] = useState(0)
 
   useEffect(() => {
     setMounted(true)
+
+    async function loadStats() {
+      const data = await getTelemetryMetrics()
+      if (data.success) {
+        setTotalUsers(data.totalUsers || 0)
+        setActiveUsers(data.activeUsers || 0)
+        setTotalImpressions(data.aiCalls || 0)
+      }
+    }
+    loadStats()
   }, [])
 
   if (!mounted) return null
@@ -24,22 +38,18 @@ export default function UsersPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="p-4 border border-border bg-card">
             <p className="text-xs text-muted-foreground mb-1">Total Users</p>
-            <p className="text-2xl font-bold text-accent">4</p>
+            <p className="text-2xl font-bold text-accent">{totalUsers}</p>
           </Card>
           <Card className="p-4 border border-border bg-card">
-            <p className="text-xs text-muted-foreground mb-1">Active Users</p>
-            <p className="text-2xl font-bold text-blue-400">3</p>
+            <p className="text-xs text-muted-foreground mb-1">Active Users (24h)</p>
+            <p className="text-2xl font-bold text-blue-400">{activeUsers}</p>
           </Card>
           <Card className="p-4 border border-border bg-card">
-            <p className="text-xs text-muted-foreground mb-1">Total Impressions</p>
-            <p className="text-2xl font-bold text-cyan-400">46.2K</p>
-          </Card>
-          <Card className="p-4 border border-border bg-card">
-            <p className="text-xs text-muted-foreground mb-1">Avg Reputation</p>
-            <p className="text-2xl font-bold text-accent">86.75</p>
+            <p className="text-xs text-muted-foreground mb-1">Impressions (24h)</p>
+            <p className="text-2xl font-bold text-cyan-400">{totalImpressions.toLocaleString()}</p>
           </Card>
         </div>
 

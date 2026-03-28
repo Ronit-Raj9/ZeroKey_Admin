@@ -6,19 +6,33 @@ import { TransactionFeed } from '@/components/feed/TransactionFeed'
 import { Card } from '@/components/ui/card'
 import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { getTelemetryMetrics } from '@/app/actions/telemetry'
 
 export default function FeedPage() {
   const [mounted, setMounted] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [totalEvents, setTotalEvents] = useState(0)
+  const [key, setKey] = useState(0)
 
   useEffect(() => {
     setMounted(true)
+
+    async function loadStats() {
+      const data = await getTelemetryMetrics()
+      if (data.success) {
+        setTotalEvents(data.aiCalls || 0)
+      }
+    }
+    loadStats()
   }, [])
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
-    // Simulate refresh
-    await new Promise(resolve => setTimeout(resolve, 500))
+    const data = await getTelemetryMetrics()
+    if (data.success) {
+      setTotalEvents(data.aiCalls || 0)
+    }
+    setKey(prev => prev + 1) // Force TransactionFeed to re-mount and re-fetch
     setIsRefreshing(false)
   }
 
@@ -48,27 +62,23 @@ export default function FeedPage() {
         {/* Info Card */}
         <Card className="p-4 border border-primary/30 bg-primary/5 backdrop-blur">
           <p className="text-sm text-card-foreground">
-            All events are displayed in real-time. The feed auto-refreshes every 3 seconds.
+            Events are fetched from the database. The feed auto-refreshes every 10 seconds.
           </p>
         </Card>
 
         {/* Feed */}
-        <TransactionFeed />
+        <TransactionFeed key={key} />
 
         {/* Stats Footer */}
         <Card className="p-4 border border-border bg-card">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-xs text-muted-foreground mb-1">Total Events</p>
-              <p className="text-2xl font-bold text-accent">1,234</p>
+              <p className="text-xs text-muted-foreground mb-1">Total Events (24h)</p>
+              <p className="text-2xl font-bold text-accent">{totalEvents.toLocaleString()}</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground mb-1">Events/Hour</p>
-              <p className="text-2xl font-bold text-blue-400">84</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Avg Volume</p>
-              <p className="text-2xl font-bold text-cyan-400">$0.82</p>
+              <p className="text-xs text-muted-foreground mb-1">Est. USDC Distributed (24h)</p>
+              <p className="text-2xl font-bold text-blue-400">${(totalEvents * 0.001).toFixed(3)}</p>
             </div>
           </div>
         </Card>

@@ -3,26 +3,26 @@ export const AdPoolABI = [
     { name: "deposit", type: "function", stateMutability: "nonpayable", inputs: [{ name: "amount", type: "uint256" }], outputs: [] },
     { name: "withdraw", type: "function", stateMutability: "nonpayable", inputs: [{ name: "amount", type: "uint256" }], outputs: [] },
     { name: "setImpressionCost", type: "function", stateMutability: "nonpayable", inputs: [{ name: "newCost", type: "uint256" }], outputs: [] },
-    { name: "setAuthorizedClaimer", type: "function", stateMutability: "nonpayable", inputs: [{ name: "newClaimer", type: "address" }], outputs: [] },
+    { name: "setAuthorizedClaimer", type: "function", stateMutability: "nonpayable", inputs: [{ name: "claimer", type: "address" }, { name: "authorized", type: "bool" }], outputs: [] },
     { name: "setMinimumDeposit", type: "function", stateMutability: "nonpayable", inputs: [{ name: "newMin", type: "uint256" }], outputs: [] },
     { name: "pause", type: "function", stateMutability: "nonpayable", inputs: [], outputs: [] },
     { name: "unpause", type: "function", stateMutability: "nonpayable", inputs: [], outputs: [] },
-    { name: "setDailyBudget", type: "function", stateMutability: "nonpayable", inputs: [{ name: "maxDaily", type: "uint256" }], outputs: [] },
+    { name: "setDailyBudget", type: "function", stateMutability: "nonpayable", inputs: [{ name: "cap", type: "uint256" }], outputs: [] },
     { name: "currentAdvertiser", type: "function", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "address" }] },
     { name: "activeAdvertiserCount", type: "function", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "uint256" }] },
     { name: "balances", type: "function", stateMutability: "view", inputs: [{ name: "", type: "address" }], outputs: [{ name: "", type: "uint256" }] },
     { name: "totalImpressions", type: "function", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "uint256" }] },
     { name: "impressionCost", type: "function", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "uint256" }] },
     { name: "minimumDeposit", type: "function", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "uint256" }] },
-    { name: "authorizedClaimer", type: "function", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "address" }] },
+    { name: "authorizedClaimers", type: "function", stateMutability: "view", inputs: [{ name: "", type: "address" }], outputs: [{ name: "", type: "bool" }] },
     { name: "paused", type: "function", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "bool" }] },
     { name: "owner", type: "function", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "address" }] },
     { name: "lifetimeImpressions", type: "function", stateMutability: "view", inputs: [{ name: "", type: "address" }], outputs: [{ name: "", type: "uint256" }] },
-    { name: "dailyBudgets", type: "function", stateMutability: "view", inputs: [{ name: "", type: "address" }], outputs: [{ name: "", type: "uint256" }] },
-    { name: "ImpressionClaimed", type: "event", inputs: [{ name: "user", type: "address", indexed: true }, { name: "amount", type: "uint256", indexed: false }, { name: "advertiser", type: "address", indexed: true }, { name: "timestamp", type: "uint256", indexed: false }, { name: "advertiserBalance", type: "uint256", indexed: false }] },
+    { name: "dailyBudgetCap", type: "function", stateMutability: "view", inputs: [{ name: "", type: "address" }], outputs: [{ name: "", type: "uint256" }] },
+    { name: "ImpressionClaimed", type: "event", inputs: [{ name: "user", type: "address", indexed: true }, { name: "advertiser", type: "address", indexed: true }, { name: "amount", type: "uint256", indexed: false }, { name: "timestamp", type: "uint256", indexed: false }, { name: "advertiserBalance", type: "uint256", indexed: false }] },
     { name: "Deposited", type: "event", inputs: [{ name: "advertiser", type: "address", indexed: true }, { name: "amount", type: "uint256", indexed: false }, { name: "newBalance", type: "uint256", indexed: false }, { name: "timestamp", type: "uint256", indexed: false }] },
-    { name: "Withdrawn", type: "event", inputs: [{ name: "advertiser", type: "address", indexed: true }, { name: "amount", type: "uint256", indexed: false }, { name: "remainingBalance", type: "uint256", indexed: false }, { name: "timestamp", type: "uint256", indexed: false }] },
-    { name: "AdvertiserDepleted", type: "event", inputs: [{ name: "advertiser", type: "address", indexed: true }, { name: "totalServed", type: "uint256", indexed: false }, { name: "timestamp", type: "uint256", indexed: false }] },
+    { name: "Withdrawn", type: "event", inputs: [{ name: "advertiser", type: "address", indexed: true }, { name: "amount", type: "uint256", indexed: false }, { name: "newBalance", type: "uint256", indexed: false }, { name: "timestamp", type: "uint256", indexed: false }] },
+    { name: "AdvertiserDepleted", type: "event", inputs: [{ name: "advertiser", type: "address", indexed: true }, { name: "timestamp", type: "uint256", indexed: false }] },
 ] as const;
 
 export const AdRegistryABI = [
@@ -32,7 +32,8 @@ export const AdRegistryABI = [
     { name: "approveCreative", type: "function", stateMutability: "nonpayable", inputs: [{ name: "advertiser", type: "address" }], outputs: [] },
     { name: "rejectCreative", type: "function", stateMutability: "nonpayable", inputs: [{ name: "advertiser", type: "address" }, { name: "reason", type: "string" }], outputs: [] },
     { name: "pendingCount", type: "function", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "uint256" }] },
-    { name: "CreativeSubmitted", type: "event", inputs: [{ name: "advertiser", type: "address", indexed: true }, { name: "tagline", type: "string", indexed: false }, { name: "timestamp", type: "uint256", indexed: false }] },
+    { name: "approvedCount", type: "function", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "uint256" }] },
+    { name: "CreativeSubmitted", type: "event", inputs: [{ name: "advertiser", type: "address", indexed: true }, { name: "timestamp", type: "uint256", indexed: false }] },
     { name: "CreativeApproved", type: "event", inputs: [{ name: "advertiser", type: "address", indexed: true }, { name: "timestamp", type: "uint256", indexed: false }] },
 ] as const;
 
@@ -41,4 +42,10 @@ export const ReputationOracleABI = [
     { name: "advertiserScore", type: "function", stateMutability: "view", inputs: [{ name: "advertiser", type: "address" }], outputs: [{ name: "", type: "uint256" }] },
     { name: "isThrottled", type: "function", stateMutability: "view", inputs: [{ name: "user", type: "address" }], outputs: [{ name: "", type: "bool" }] },
     { name: "flagUser", type: "function", stateMutability: "nonpayable", inputs: [{ name: "user", type: "address" }], outputs: [] },
+] as const;
+
+export const ERC20_ABI = [
+    { name: "balanceOf", type: "function", stateMutability: "view", inputs: [{ name: "account", type: "address" }], outputs: [{ name: "", type: "uint256" }] },
+    { name: "approve", type: "function", stateMutability: "nonpayable", inputs: [{ name: "spender", type: "address" }, { name: "amount", type: "uint256" }], outputs: [{ name: "", type: "bool" }] },
+    { name: "allowance", type: "function", stateMutability: "view", inputs: [{ name: "owner", type: "address" }, { name: "spender", type: "address" }], outputs: [{ name: "", type: "uint256" }] },
 ] as const;

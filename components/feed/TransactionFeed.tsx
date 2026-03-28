@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ExternalLink } from 'lucide-react'
+import { getTransactionFeed } from '@/app/actions/telemetry'
 
 interface Transaction {
   id: string
@@ -12,8 +13,8 @@ interface Transaction {
   wallet: string
   amount: string
   timestamp: Date
-  txHash: string
   description: string
+  campaignId?: string
 }
 
 interface TransactionFeedProps {
@@ -23,60 +24,33 @@ interface TransactionFeedProps {
 export function TransactionFeed({ transactions: initialTransactions }: TransactionFeedProps) {
   const [filter, setFilter] = useState<'all' | 'impression' | 'deposit' | 'withdraw' | 'payment'>('all')
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions || [])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Generate mock transactions
-    const mockTransactions: Transaction[] = [
-      {
-        id: '1',
-        type: 'impression',
-        wallet: '0x742d35Cc6634C0532925a3b844Bc9e7595f1bEb0',
-        amount: '0.0012',
-        timestamp: new Date(Date.now() - 2 * 60000),
-        txHash: '0xabcd...ef12',
-        description: 'Earned 0.0012 USDC from claim',
-      },
-      {
-        id: '2',
-        type: 'deposit',
-        wallet: '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
-        amount: '5.5',
-        timestamp: new Date(Date.now() - 5 * 60000),
-        txHash: '0x1234...5678',
-        description: 'Deposited 5.5 USDC',
-      },
-      {
-        id: '3',
-        type: 'payment',
-        wallet: '0x742d35Cc6634C0532925a3b844Bc9e7595f1bEb0',
-        amount: '0.001',
-        timestamp: new Date(Date.now() - 8 * 60000),
-        txHash: '0xpay1...pay2',
-        description: 'Paid 0.001 USDC for x402 call',
-      },
-      {
-        id: '4',
-        type: 'impression',
-        wallet: '0x9f3d7b4e2c1a9d8f7e6c5b4a3d2e1f0g',
-        amount: '0.0015',
-        timestamp: new Date(Date.now() - 12 * 60000),
-        txHash: '0xghij...klmn',
-        description: 'Earned 0.0015 USDC from claim',
-      },
-      {
-        id: '5',
-        type: 'withdraw',
-        wallet: '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
-        amount: '2.0',
-        timestamp: new Date(Date.now() - 15 * 60000),
-        txHash: '0xwith...draw',
-        description: 'Withdrew 2.0 USDC',
-      },
-    ]
-    setTransactions(mockTransactions)
+    async function loadFeed() {
+      try {
+        const data = await getTransactionFeed()
+        if (data.length > 0) {
+          setTransactions(data.map(d => ({
+            ...d,
+            timestamp: new Date(d.timestamp),
+          })))
+        }
+      } catch (err) {
+        console.error('Failed to load transaction feed:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadFeed()
+
+    // Auto-refresh every 10 seconds
+    const interval = setInterval(loadFeed, 10000)
+    return () => clearInterval(interval)
   }, [])
 
   const truncateAddress = (addr: string) => {
+    if (!addr || addr.length < 10) return addr
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`
   }
 
@@ -89,6 +63,25 @@ export function TransactionFeed({ transactions: initialTransactions }: Transacti
     deposit: { bg: 'bg-blue-500/10', text: 'text-blue-400', label: 'Deposit' },
     withdraw: { bg: 'bg-amber-500/10', text: 'text-amber-400', label: 'Withdraw' },
     payment: { bg: 'bg-purple-500/10', text: 'text-purple-400', label: 'Payment' },
+  }
+
+  const getTimeAgo = (timestamp: Date) => {
+    const seconds = Math.floor((Date.now() - timestamp.getTime()) / 1000)
+    if (seconds < 60) return `${seconds}s ago`
+    const minutes = Math.floor(seconds / 60)
+    if (minutes < 60) return `${minutes}m ago`
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `${hours}h ago`
+    const days = Math.floor(hours / 24)
+    return `${days}d ago`
+  }
+
+  if (loading) {
+    return (
+      <Card className="p-8 text-center border border-border bg-card">
+        <p className="text-muted-foreground">Loading transactions...</p>
+      </Card>
+    )
   }
 
   return (
@@ -112,12 +105,12 @@ export function TransactionFeed({ transactions: initialTransactions }: Transacti
       <div className="space-y-2">
         {filteredTransactions.length === 0 ? (
           <Card className="p-8 text-center border border-border bg-card">
-            <p className="text-muted-foreground">No transactions found</p>
+            <p className="text-muted-foreground">No transactions recorded yet</p>
+            <p className="text-xs text-muted-foreground mt-1">Transactions will appear here as users interact with AdShell</p>
           </Card>
         ) : (
           filteredTransactions.map((tx) => {
-            const style = typeStyles[tx.type]
-            const timeAgo = Math.round((Date.now() - tx.timestamp.getTime()) / 60000)
+            const style = typeStyles[tx.type] || typeStyles.impression
 
             return (
               <Card
@@ -130,7 +123,7 @@ export function TransactionFeed({ transactions: initialTransactions }: Transacti
                       <Badge className={`${style.bg} ${style.text}`}>
                         {style.label}
                       </Badge>
-                      <span className="text-xs text-muted-foreground">{timeAgo}m ago</span>
+                      <span className="text-xs text-muted-foreground">{getTimeAgo(tx.timestamp)}</span>
                     </div>
                     <p className="text-sm font-medium text-card-foreground mb-1">
                       {tx.description}
@@ -144,14 +137,7 @@ export function TransactionFeed({ transactions: initialTransactions }: Transacti
                       {tx.type === 'withdraw' || tx.type === 'payment' ? '-' : '+'}
                       {tx.amount}
                     </p>
-                    <a
-                      href={`https://testnet.monadexplorer.com/tx/${tx.txHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-primary hover:text-primary/80 inline-flex items-center gap-1 mt-2"
-                    >
-                      View <ExternalLink className="w-3 h-3" />
-                    </a>
+                    <span className="text-xs text-muted-foreground">USDC</span>
                   </div>
                 </div>
               </Card>

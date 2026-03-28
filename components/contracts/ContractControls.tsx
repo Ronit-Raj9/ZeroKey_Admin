@@ -6,9 +6,10 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { AlertCircle, CheckCircle2, Lock, Unlock } from 'lucide-react'
+import { CheckCircle2, Lock, Unlock } from 'lucide-react'
 import { ADPOOL_ADDRESS } from '@/lib/contracts/addresses'
 import { AdPoolABI } from '@/lib/contracts/abis'
+import { formatUnits } from 'viem'
 
 export function ContractControls() {
   const [selectedAction, setSelectedAction] = useState<string | null>(null)
@@ -22,16 +23,16 @@ export function ContractControls() {
     functionName: 'impressionCost',
   })
 
-  const { data: authorizedClaimer } = useReadContract({
+  const { data: currentAdv } = useReadContract({
     address: ADPOOL_ADDRESS,
     abi: AdPoolABI,
-    functionName: 'authorizedClaimer',
+    functionName: 'currentAdvertiser',
   })
 
-  const { data: activeAdvertiser } = useReadContract({
+  const { data: activeCount } = useReadContract({
     address: ADPOOL_ADDRESS,
     abi: AdPoolABI,
-    functionName: 'activeAdvertiser',
+    functionName: 'activeAdvertiserCount',
   })
 
   const { data: paused } = useReadContract({
@@ -40,10 +41,22 @@ export function ContractControls() {
     functionName: 'paused',
   })
 
+  const { data: owner } = useReadContract({
+    address: ADPOOL_ADDRESS,
+    abi: AdPoolABI,
+    functionName: 'owner',
+  })
+
+  const { data: minimumDeposit } = useReadContract({
+    address: ADPOOL_ADDRESS,
+    abi: AdPoolABI,
+    functionName: 'minimumDeposit',
+  })
+
   const { writeContract, isPending } = useWriteContract()
 
   const formatAddress = (addr: string | undefined) => {
-    if (!addr) return 'Not set'
+    if (!addr || addr === '0x0000000000000000000000000000000000000000') return 'None'
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`
   }
 
@@ -76,7 +89,7 @@ export function ContractControls() {
             address: ADPOOL_ADDRESS,
             abi: AdPoolABI,
             functionName: 'setAuthorizedClaimer',
-            args: [inputValue as `0x${string}`],
+            args: [inputValue as `0x${string}`, true],
           },
           {
             onSuccess: (hash: string) => {
@@ -86,13 +99,13 @@ export function ContractControls() {
             },
           }
         )
-      } else if (action === 'advertiser') {
+      } else if (action === 'minimumDeposit') {
         writeContract(
           {
             address: ADPOOL_ADDRESS,
             abi: AdPoolABI,
-            functionName: 'setActiveAdvertiser',
-            args: [inputValue as `0x${string}`],
+            functionName: 'setMinimumDeposit',
+            args: [BigInt(inputValue)],
           },
           {
             onSuccess: (hash: string) => {
@@ -141,18 +154,30 @@ export function ContractControls() {
       {/* Current State Panel */}
       <Card className="p-6 border border-border bg-card">
         <h3 className="text-lg font-semibold text-card-foreground mb-4">Current Contract State</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="space-y-2">
             <Label className="text-sm text-muted-foreground">Impression Cost</Label>
-            <p className="text-xl font-bold text-accent">{impressionCost ? Number(impressionCost) / 1e18 : '0'} USDC</p>
+            <p className="text-xl font-bold text-accent">
+              {impressionCost ? formatUnits(impressionCost, 6) : '0'} USDC
+            </p>
           </div>
           <div className="space-y-2">
-            <Label className="text-sm text-muted-foreground">Authorized Claimer</Label>
-            <p className="text-sm font-mono text-card-foreground">{formatAddress(authorizedClaimer as any)}</p>
+            <Label className="text-sm text-muted-foreground">Current Advertiser (Queue Head)</Label>
+            <p className="text-sm font-mono text-card-foreground">{formatAddress(currentAdv as any)}</p>
           </div>
           <div className="space-y-2">
-            <Label className="text-sm text-muted-foreground">Active Advertiser</Label>
-            <p className="text-sm font-mono text-card-foreground">{formatAddress(activeAdvertiser as any)}</p>
+            <Label className="text-sm text-muted-foreground">Active Advertisers</Label>
+            <p className="text-xl font-bold text-card-foreground">{activeCount ? Number(activeCount) : '0'}</p>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-sm text-muted-foreground">Minimum Deposit</Label>
+            <p className="text-sm font-bold text-card-foreground">
+              {minimumDeposit ? formatUnits(minimumDeposit, 6) : '0'} USDC
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-sm text-muted-foreground">Contract Owner</Label>
+            <p className="text-sm font-mono text-card-foreground">{formatAddress(owner as any)}</p>
           </div>
           <div className="space-y-2">
             <Label className="text-sm text-muted-foreground">Contract Status</Label>
@@ -178,10 +203,11 @@ export function ContractControls() {
         {/* Set Impression Cost */}
         <Card className="p-4 border border-border bg-card">
           <h4 className="font-semibold text-card-foreground mb-3">Set Impression Cost</h4>
+          <p className="text-xs text-muted-foreground mb-3">Value in raw units (1000 = 0.001 USDC)</p>
           {selectedAction === 'impressionCost' ? (
             <div className="space-y-3">
               <Input
-                placeholder="Cost in wei"
+                placeholder="e.g. 1000 for 0.001 USDC"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 className="bg-input border-border"
@@ -221,7 +247,8 @@ export function ContractControls() {
 
         {/* Set Authorized Claimer */}
         <Card className="p-4 border border-border bg-card">
-          <h4 className="font-semibold text-card-foreground mb-3">Set Authorized Claimer</h4>
+          <h4 className="font-semibold text-card-foreground mb-3">Add Authorized Claimer</h4>
+          <p className="text-xs text-muted-foreground mb-3">Authorize a new proxy wallet to claim impressions</p>
           {selectedAction === 'claimer' ? (
             <div className="space-y-3">
               <Input
@@ -258,18 +285,19 @@ export function ContractControls() {
               className="w-full"
               onClick={() => setSelectedAction('claimer')}
             >
-              Update Claimer
+              Add Claimer
             </Button>
           )}
         </Card>
 
-        {/* Set Active Advertiser */}
+        {/* Set Minimum Deposit */}
         <Card className="p-4 border border-border bg-card">
-          <h4 className="font-semibold text-card-foreground mb-3">Set Active Advertiser</h4>
-          {selectedAction === 'advertiser' ? (
+          <h4 className="font-semibold text-card-foreground mb-3">Set Minimum Deposit</h4>
+          <p className="text-xs text-muted-foreground mb-3">Value in raw units (10000 = 0.01 USDC)</p>
+          {selectedAction === 'minimumDeposit' ? (
             <div className="space-y-3">
               <Input
-                placeholder="0x... address"
+                placeholder="e.g. 10000 for 0.01 USDC"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 className="bg-input border-border"
@@ -277,7 +305,7 @@ export function ContractControls() {
               <div className="flex gap-2">
                 <Button
                   size="sm"
-                  onClick={() => handleAction('advertiser')}
+                  onClick={() => handleAction('minimumDeposit')}
                   disabled={isPending}
                   className="flex-1"
                 >
@@ -300,37 +328,29 @@ export function ContractControls() {
               size="sm"
               variant="outline"
               className="w-full"
-              onClick={() => setSelectedAction('advertiser')}
+              onClick={() => setSelectedAction('minimumDeposit')}
             >
-              Update Advertiser
+              Update Minimum
             </Button>
           )}
         </Card>
 
-        {/* Pause Contract */}
-        <Card className="p-4 border border-destructive/30 bg-destructive/5">
-          <h4 className="font-semibold text-card-foreground mb-3">Pause Contract</h4>
+        {/* Pause / Unpause */}
+        <Card className={`p-4 border ${paused ? 'border-accent/30 bg-accent/5' : 'border-destructive/30 bg-destructive/5'}`}>
+          <h4 className="font-semibold text-card-foreground mb-3">
+            {paused ? 'Unpause Contract' : 'Pause Contract'}
+          </h4>
+          <p className="text-xs text-muted-foreground mb-3">
+            {paused ? 'Resume impression claims and deposits' : 'Emergency stop — blocks claims and deposits'}
+          </p>
           <Button
             size="sm"
-            variant="destructive"
+            variant={paused ? 'default' : 'destructive'}
             className="w-full"
-            onClick={() => handleAction('pause')}
-            disabled={isPending || paused}
+            onClick={() => handleAction(paused ? 'unpause' : 'pause')}
+            disabled={isPending}
           >
-            {isPending ? 'Pausing...' : paused ? 'Already Paused' : 'Pause'}
-          </Button>
-        </Card>
-
-        {/* Unpause Contract */}
-        <Card className="p-4 border border-accent/30 bg-accent/5">
-          <h4 className="font-semibold text-card-foreground mb-3">Unpause Contract</h4>
-          <Button
-            size="sm"
-            className="w-full bg-accent hover:bg-accent/80"
-            onClick={() => handleAction('unpause')}
-            disabled={isPending || !paused}
-          >
-            {isPending ? 'Unpausing...' : !paused ? 'Already Active' : 'Unpause'}
+            {isPending ? 'Processing...' : paused ? 'Unpause' : 'Pause'}
           </Button>
         </Card>
       </div>

@@ -6,6 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Copy, ChevronDown, ChevronUp } from 'lucide-react'
+import { useReadContract } from 'wagmi'
+import { ADPOOL_ADDRESS } from '@/lib/contracts/addresses'
+import { AdPoolABI } from '@/lib/contracts/abis'
+import { formatUnits } from 'viem'
 
 interface Advertiser {
   id: string
@@ -25,50 +29,23 @@ interface AdvertiserTableProps {
 export function AdvertiserTable({ advertisers: initialAdvertisers }: AdvertiserTableProps) {
   const [search, setSearch] = useState('')
   const [expanded, setExpanded] = useState<string | null>(null)
-  const [advertisers] = useState<Advertiser[]>(initialAdvertisers || [
-    {
-      id: '1',
-      wallet: '0x742d35Cc6634C0532925a3b844Bc9e7595f1bEb0',
-      deposited: '25.50',
-      balance: '12.30',
-      impressions: 45200,
-      dailyBudget: '1.00',
-      status: 'active',
-      lastActive: '2 minutes ago',
-    },
-    {
-      id: '2',
-      wallet: '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
-      deposited: '100.00',
-      balance: '0.00',
-      impressions: 125000,
-      dailyBudget: '5.00',
-      status: 'depleted',
-      lastActive: '30 minutes ago',
-    },
-    {
-      id: '3',
-      wallet: '0x9f3d7b4e2c1a9d8f7e6c5b4a3d2e1f0g',
-      deposited: '50.00',
-      balance: '50.00',
-      impressions: 0,
-      dailyBudget: '2.00',
-      status: 'paused',
-      lastActive: '5 days ago',
-    },
-    {
-      id: '4',
-      wallet: '0x1234567890abcdef1234567890abcdef12345678',
-      deposited: '75.25',
-      balance: '45.50',
-      impressions: 89300,
-      dailyBudget: '3.00',
-      status: 'active',
-      lastActive: '1 minute ago',
-    },
-  ])
+  const [advertisers] = useState<Advertiser[]>(initialAdvertisers || [])
+
+  // Read on-chain data
+  const { data: activeCount } = useReadContract({
+    address: ADPOOL_ADDRESS,
+    abi: AdPoolABI,
+    functionName: 'activeAdvertiserCount',
+  })
+
+  const { data: totalImpressions } = useReadContract({
+    address: ADPOOL_ADDRESS,
+    abi: AdPoolABI,
+    functionName: 'totalImpressions',
+  })
 
   const truncateAddress = (addr: string) => {
+    if (!addr || addr.length < 10) return addr
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`
   }
 
@@ -95,6 +72,20 @@ export function AdvertiserTable({ advertisers: initialAdvertisers }: AdvertiserT
 
   return (
     <div className="space-y-4">
+      {/* On-chain Summary */}
+      <Card className="p-4 border border-primary/30 bg-primary/5">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Active Advertisers (On-Chain)</p>
+            <p className="text-xl font-bold text-accent">{activeCount ? Number(activeCount) : 0}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Total Impressions Served</p>
+            <p className="text-xl font-bold text-card-foreground">{totalImpressions ? Number(totalImpressions).toLocaleString() : 0}</p>
+          </div>
+        </div>
+      </Card>
+
       {/* Search */}
       <div className="flex gap-2">
         <Input
@@ -103,7 +94,6 @@ export function AdvertiserTable({ advertisers: initialAdvertisers }: AdvertiserT
           onChange={(e) => setSearch(e.target.value)}
           className="flex-1 bg-input border-border"
         />
-        <Button variant="outline">Filter</Button>
       </div>
 
       {/* Table */}
@@ -125,7 +115,9 @@ export function AdvertiserTable({ advertisers: initialAdvertisers }: AdvertiserT
               {filteredAdvertisers.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
-                    No advertisers found
+                    {advertisers.length === 0
+                      ? 'No advertisers registered yet — deposit USDC to AdPool to get started'
+                      : 'No advertisers found matching search'}
                   </td>
                 </tr>
               ) : (
@@ -195,11 +187,6 @@ export function AdvertiserTable({ advertisers: initialAdvertisers }: AdvertiserT
                                   ${(Number(adv.deposited) - Number(adv.balance)).toFixed(2)}
                                 </p>
                               </div>
-                            </div>
-                            <div className="flex gap-2 pt-2 border-t border-border">
-                              <Button size="sm" variant="outline">Pause</Button>
-                              <Button size="sm" variant="outline">Resume</Button>
-                              <Button size="sm" variant="outline">Remove</Button>
                             </div>
                           </div>
                         </td>
