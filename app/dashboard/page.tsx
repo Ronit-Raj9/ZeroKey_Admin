@@ -86,7 +86,7 @@ export default function DashboardPage() {
                 {/* Header */}
                 <div>
                     <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
-                    <p className="text-muted-foreground">Real-time metrics from the zeroke pool & Supabase Telemetry</p>
+                    <p className="text-muted-foreground">Real-time metrics from the zerokey pool & Supabase Telemetry</p>
                 </div>
 
                 {/* Metrics Grid */}

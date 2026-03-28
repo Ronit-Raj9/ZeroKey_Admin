@@ -8,8 +8,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'zeroke Dashboard',
-  description: 'Admin dashboard for zeroke on Monad testnet',
+  title: 'zerokey Dashboard',
+  description: 'Admin dashboard for zerokey on Monad testnet',
   generator: 'v0.app',
   icons: {
     icon: [
