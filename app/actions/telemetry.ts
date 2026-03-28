@@ -38,7 +38,7 @@ export async function getTelemetryMetrics() {
             }
         })
 
-        events.forEach(event => {
+        events.forEach((event: { createdAt: Date }) => {
             const d = new Date(event.createdAt)
             const hourLabel = d.getHours().toString().padStart(2, '0') + ':00'
             const bucket = grouped.find(g => g.time === hourLabel)
@@ -69,7 +69,7 @@ export async function getTelemetryMetrics() {
             }
         })
 
-        weekEvents.forEach(event => {
+        weekEvents.forEach((event: { createdAt: Date; eventType: string }) => {
             const d = new Date(event.createdAt)
             const daysSinceStart = Math.floor((Date.now() - weekAgo.getTime()) / (24 * 60 * 60 * 1000))
             const eventDayIndex = Math.floor((d.getTime() - weekAgo.getTime()) / (24 * 60 * 60 * 1000))
@@ -130,7 +130,7 @@ export async function getUsers() {
             }
         })
 
-        return installations.map(inst => ({
+        return installations.map((inst: any) => ({
             id: inst.id,
             wallet: inst.walletAddress || 'Unknown',
             impressions: inst._count.events,
@@ -156,7 +156,7 @@ export async function getTransactionFeed() {
             }
         })
 
-        return events.map(event => ({
+        return events.map((event: any) => ({
             id: event.id,
             type: event.eventType as 'impression' | 'deposit' | 'withdraw' | 'payment',
             wallet: event.installation.walletAddress || 'Unknown',

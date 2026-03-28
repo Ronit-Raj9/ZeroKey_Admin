@@ -31,7 +31,7 @@ export function TransactionFeed({ transactions: initialTransactions }: Transacti
       try {
         const data = await getTransactionFeed()
         if (data.length > 0) {
-          setTransactions(data.map(d => ({
+          setTransactions(data.map((d: any) => ({
             ...d,
             timestamp: new Date(d.timestamp),
           })))
