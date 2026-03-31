@@ -11,7 +11,12 @@ type AdUpdateInput = Partial<AdInput> & {
   isActive?: boolean
 }
 
-const proxyUrl = process.env.PROXY_URL || process.env.NEXT_PUBLIC_PROXY_URL || 'http://localhost:4021'
+const defaultProxyUrl =
+  process.env.NODE_ENV === 'production'
+    ? 'https://zerokey-8p3y.onrender.com'
+    : 'http://localhost:4021'
+
+const proxyUrl = process.env.PROXY_URL || process.env.NEXT_PUBLIC_PROXY_URL || defaultProxyUrl
 const adminApiKey = process.env.ADSHELL_ADMIN_API_KEY || process.env.ADMIN_API_KEY || 'adshell-admin'
 
 async function proxyFetch<T>(path: string, init?: RequestInit): Promise<T> {
