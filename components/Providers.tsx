@@ -4,7 +4,7 @@ import 'client-only'
 import '@rainbow-me/rainbowkit/styles.css'
 import { getDefaultConfig, RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
-import { WagmiProvider, createStorage } from 'wagmi'
+import { WagmiProvider } from 'wagmi'
 import { monadTestnet } from '@/lib/monad'
 import { ReactNode } from 'react'
 import { useState, useEffect, useMemo } from 'react'
@@ -48,9 +48,6 @@ export function Providers({ children }: { children: ReactNode }) {
       projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || 'demo',
       chains: [monadTestnet],
       ssr: false,
-      storage: createStorage({
-        storage: ssrStorage,
-      }),
     })
   }, [mounted])
 

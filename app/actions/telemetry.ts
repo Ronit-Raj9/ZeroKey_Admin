@@ -4,6 +4,17 @@ import { prisma } from '@/lib/prisma'
 
 export async function getTelemetryMetrics() {
     try {
+        if (!prisma) {
+            return {
+                success: false,
+                aiCalls: 0,
+                impressionData: [],
+                revenueData: [],
+                totalUsers: 0,
+                activeUsers: 0,
+            }
+        }
+
         const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000)
         const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 
@@ -117,6 +128,8 @@ export async function getTelemetryMetrics() {
 
 export async function getUsers() {
     try {
+        if (!prisma) return []
+
         const installations = await prisma.opencodeInstallation.findMany({
             include: {
                 _count: {
@@ -146,6 +159,8 @@ export async function getUsers() {
 
 export async function getTransactionFeed() {
     try {
+        if (!prisma) return []
+
         const events = await prisma.adEvent.findMany({
             orderBy: { createdAt: 'desc' },
             take: 50,

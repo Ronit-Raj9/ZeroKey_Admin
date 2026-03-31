@@ -10,7 +10,6 @@ function datasourceUrl(): string {
 }
 
 export default defineConfig({
-    earlyAccess: true,
     schema: path.join(__dirname, 'prisma', 'schema.prisma'),
     datasource: {
         url: datasourceUrl(),
